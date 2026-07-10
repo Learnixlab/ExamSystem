@@ -51,7 +51,7 @@ function registerUser(name, email, password) {
     highestScore: 0,
     averageScore: 0,
     isAdmin: email.toLowerCase().trim() === ADMIN_EMAIL,
-    completedExams: [] // ← NEW: কোন exam দিয়েছে তার লিস্ট
+    completedExams: []
   };
   
   users.push(newUser);
@@ -77,7 +77,6 @@ function logoutUser() {
   setCurrentUser(null);
 }
 
-// ===== NEW: Check if user has already taken an exam =====
 function hasUserTakenExam(userId, examId) {
   const users = getUsers();
   const user = users.find(u => u.id === userId);
@@ -85,7 +84,6 @@ function hasUserTakenExam(userId, examId) {
   return user.completedExams && user.completedExams.includes(examId);
 }
 
-// ===== NEW: Mark exam as completed for user =====
 function markExamCompleted(userId, examId) {
   const users = getUsers();
   const userIndex = users.findIndex(u => u.id === userId);
@@ -101,7 +99,6 @@ function markExamCompleted(userId, examId) {
   
   saveUsers(users);
   
-  // Update current user session
   const current = getCurrentUser();
   if (current && current.id === userId) {
     current.completedExams = users[userIndex].completedExams;
@@ -122,7 +119,6 @@ function updateUserStats(userId, score, examId) {
     user.highestScore = score;
   }
   
-  // Mark exam as completed
   if (!user.completedExams) user.completedExams = [];
   if (!user.completedExams.includes(examId)) {
     user.completedExams.push(examId);
@@ -211,7 +207,9 @@ function toggleUserMenu() {
       logoutUser();
       menu.classList.remove('show');
       checkAuthState();
-      showToast('Logged out successfully', 'success');
+      if (typeof showToast === 'function') {
+        showToast('Logged out successfully', 'success');
+      }
       window.location.reload();
     });
   }
@@ -229,7 +227,6 @@ function showToast(message, type = 'info') {
   }, 3000);
 }
 
-// ===== Auth Forms Events =====
 document.addEventListener('DOMContentLoaded', function() {
   // Login form
   const loginForm = document.getElementById('loginForm');
@@ -314,6 +311,5 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-// ===== Expose functions =====
 window.hasUserTakenExam = hasUserTakenExam;
 window.markExamCompleted = markExamCompleted;

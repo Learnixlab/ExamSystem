@@ -18,29 +18,35 @@ function checkAdminAccess() {
 
 function loadAdmin() {
   if (!checkAdminAccess()) return;
+  console.log('🔄 Loading admin panel...');
   updateAdminStats();
   renderExamList();
   renderAllQuestions();
   setupAdminEvents();
   populateExamSelects();
   updateGitHubStatus();
+  console.log('✅ Admin panel loaded');
 }
 
 function updateAdminStats() {
-  const totalExams = ALL_EXAMS.length;
-  const totalQuestions = ALL_EXAMS.reduce((sum, e) => sum + (e.questions ? e.questions.length : 0), 0);
+  const totalExams = ALL_EXAMS ? ALL_EXAMS.length : 0;
+  const totalQuestions = ALL_EXAMS ? ALL_EXAMS.reduce((sum, e) => sum + (e.questions ? e.questions.length : 0), 0) : 0;
   const totalUsers = getUsers().length;
   
-  document.getElementById('adminTotalExams').textContent = totalExams;
-  document.getElementById('adminTotalQuestions').textContent = totalQuestions;
-  document.getElementById('adminTotalUsers').textContent = totalUsers;
+  const examsEl = document.getElementById('adminTotalExams');
+  const questionsEl = document.getElementById('adminTotalQuestions');
+  const usersEl = document.getElementById('adminTotalUsers');
+  
+  if (examsEl) examsEl.textContent = totalExams;
+  if (questionsEl) questionsEl.textContent = totalQuestions;
+  if (usersEl) usersEl.textContent = totalUsers;
 }
 
 function renderExamList() {
   const container = document.getElementById('adminExamList');
   if (!container) return;
   
-  if (ALL_EXAMS.length === 0) {
+  if (!ALL_EXAMS || ALL_EXAMS.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
         <p>📭 No exams created yet.</p>
@@ -52,7 +58,7 @@ function renderExamList() {
     return;
   }
   
-  container.innerHTML = ALL_EXAMS.map((exam, index) => `
+  container.innerHTML = ALL_EXAMS.map((exam) => `
     <div class="admin-exam-card">
       <div class="exam-info">
         <div class="exam-icon">${exam.icon || '📝'}</div>
@@ -117,14 +123,13 @@ function renderAllQuestions(filterExamId = 'all') {
   
   if (!html) {
     html = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted);">
-      📭 No questions found. ${ALL_EXAMS.length > 0 ? 'Add your first question!' : 'Create an exam first!'}
+      📭 No questions found. ${ALL_EXAMS && ALL_EXAMS.length > 0 ? 'Add your first question!' : 'Create an exam first!'}
     </td></tr>`;
   }
   
   tbody.innerHTML = html;
 }
 
-// ===== CREATE EXAM =====
 function createExam(examData) {
   const newExam = {
     id: 'exam_' + Date.now(),
@@ -139,7 +144,7 @@ function createExam(examData) {
   };
   
   ALL_EXAMS.push(newExam);
-  saveExamsToStorage(); // This will sync to GitHub if token is set
+  saveExamsToStorage();
   updateAdminStats();
   renderExamList();
   renderAllQuestions();
@@ -147,7 +152,6 @@ function createExam(examData) {
   showToast('✅ Exam created successfully!', 'success');
 }
 
-// ===== EDIT EXAM =====
 function updateExam(examId, examData) {
   const exam = getExamById(examId);
   if (!exam) {
@@ -168,7 +172,6 @@ function updateExam(examId, examData) {
   showToast('✅ Exam updated successfully!', 'success');
 }
 
-// ===== DELETE EXAM =====
 function deleteExam(examId) {
   if (!confirm('⚠️ Are you sure you want to delete this exam and ALL its questions?')) return;
   
@@ -187,7 +190,6 @@ function deleteExam(examId) {
   showToast('✅ Exam deleted successfully!', 'success');
 }
 
-// ===== ADD QUESTION =====
 function addNewQuestion() {
   const examId = document.getElementById('addQuestionExam').value;
   const question = document.getElementById('addQuestionText').value.trim();
@@ -227,7 +229,6 @@ function addNewQuestion() {
   renderExamList();
 }
 
-// ===== EDIT QUESTION =====
 function openEditQuestionModal(examId, qIndex) {
   const exam = getExamById(examId);
   if (!exam || !exam.questions || !exam.questions[qIndex]) {
@@ -280,7 +281,6 @@ function saveEditedQuestion() {
   renderAllQuestions();
 }
 
-// ===== DELETE QUESTION =====
 function deleteQuestion(examId, qIndex) {
   if (!confirm('⚠️ Are you sure you want to delete this question?')) return;
   
@@ -300,13 +300,11 @@ function deleteQuestion(examId, qIndex) {
   renderExamList();
 }
 
-// ===== Open Add Exam Modal =====
 function openAddExamModal() {
   document.getElementById('addExamModal').style.display = 'flex';
   document.getElementById('addExamForm').reset();
 }
 
-// ===== Open Edit Exam Modal =====
 function openEditExamModal(examId) {
   const exam = getExamById(examId);
   if (!exam) {
@@ -324,7 +322,6 @@ function openEditExamModal(examId) {
   document.getElementById('editExamModal').style.display = 'flex';
 }
 
-// ===== Populate Exam Selects =====
 function populateExamSelects() {
   const selects = ['addQuestionExam', 'filterExam'];
   selects.forEach(id => {
@@ -338,7 +335,6 @@ function populateExamSelects() {
   });
 }
 
-// ===== GitHub Token Functions =====
 function handleSetToken() {
   const input = document.getElementById('githubTokenInput');
   const token = input.value.trim();
@@ -371,81 +367,104 @@ function updateGitHubStatus() {
     if (status.connected) {
       el.innerHTML = `✅ Connected to <strong>${status.repo}</strong> (${status.file})`;
       el.style.color = 'var(--success)';
+      el.style.background = '#d1fae5';
     } else {
       el.innerHTML = '⚪ Not connected to GitHub (local storage only)';
       el.style.color = 'var(--text-muted)';
+      el.style.background = 'var(--bg)';
     }
   }
 }
 
-// ===== Setup Admin Events =====
 function setupAdminEvents() {
   // Add Exam
-  document.getElementById('addExamBtn').addEventListener('click', openAddExamModal);
+  const addExamBtn = document.getElementById('addExamBtn');
+  if (addExamBtn) addExamBtn.addEventListener('click', openAddExamModal);
   
-  document.getElementById('addExamForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const data = {
-      title: document.getElementById('examTitle').value,
-      icon: document.getElementById('examIcon').value || '📝',
-      description: document.getElementById('examDescription').value,
-      duration: document.getElementById('examDuration').value,
-      difficulty: document.getElementById('examDifficulty').value
-    };
-    createExam(data);
-    document.getElementById('addExamModal').style.display = 'none';
-  });
+  const addExamForm = document.getElementById('addExamForm');
+  if (addExamForm) {
+    addExamForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const data = {
+        title: document.getElementById('examTitle').value,
+        icon: document.getElementById('examIcon').value || '📝',
+        description: document.getElementById('examDescription').value,
+        duration: document.getElementById('examDuration').value,
+        difficulty: document.getElementById('examDifficulty').value
+      };
+      createExam(data);
+      document.getElementById('addExamModal').style.display = 'none';
+    });
+  }
   
   // Edit Exam
-  document.getElementById('editExamForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const examId = document.getElementById('editExamId').value;
-    const data = {
-      title: document.getElementById('editExamTitle').value,
-      icon: document.getElementById('editExamIcon').value || '📝',
-      description: document.getElementById('editExamDescription').value,
-      duration: document.getElementById('editExamDuration').value,
-      difficulty: document.getElementById('editExamDifficulty').value
-    };
-    updateExam(examId, data);
-    document.getElementById('editExamModal').style.display = 'none';
-  });
+  const editExamForm = document.getElementById('editExamForm');
+  if (editExamForm) {
+    editExamForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const examId = document.getElementById('editExamId').value;
+      const data = {
+        title: document.getElementById('editExamTitle').value,
+        icon: document.getElementById('editExamIcon').value || '📝',
+        description: document.getElementById('editExamDescription').value,
+        duration: document.getElementById('editExamDuration').value,
+        difficulty: document.getElementById('editExamDifficulty').value
+      };
+      updateExam(examId, data);
+      document.getElementById('editExamModal').style.display = 'none';
+    });
+  }
   
   // Add Question
-  document.getElementById('addQuestionBtn').addEventListener('click', () => {
-    if (ALL_EXAMS.length === 0) {
-      showToast('⚠️ Please create an exam first!', 'warning');
-      openAddExamModal();
-      return;
-    }
-    document.getElementById('addQuestionModal').style.display = 'flex';
-  });
+  const addQuestionBtn = document.getElementById('addQuestionBtn');
+  if (addQuestionBtn) {
+    addQuestionBtn.addEventListener('click', () => {
+      if (!ALL_EXAMS || ALL_EXAMS.length === 0) {
+        showToast('⚠️ Please create an exam first!', 'warning');
+        openAddExamModal();
+        return;
+      }
+      document.getElementById('addQuestionModal').style.display = 'flex';
+    });
+  }
   
-  document.getElementById('addQuestionForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    addNewQuestion();
-  });
+  const addQuestionForm = document.getElementById('addQuestionForm');
+  if (addQuestionForm) {
+    addQuestionForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      addNewQuestion();
+    });
+  }
   
   // Edit Question
-  document.getElementById('editQuestionForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    saveEditedQuestion();
-  });
+  const editQuestionForm = document.getElementById('editQuestionForm');
+  if (editQuestionForm) {
+    editQuestionForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      saveEditedQuestion();
+    });
+  }
   
   // Filter
-  document.getElementById('filterExam').addEventListener('change', function() {
-    renderAllQuestions(this.value);
-  });
+  const filterExam = document.getElementById('filterExam');
+  if (filterExam) {
+    filterExam.addEventListener('change', function() {
+      renderAllQuestions(this.value);
+    });
+  }
   
   // Search
-  document.getElementById('searchQuestions').addEventListener('input', function() {
-    const searchTerm = this.value.toLowerCase();
-    const rows = document.querySelectorAll('#adminQuestionList tr');
-    rows.forEach(row => {
-      const text = row.textContent.toLowerCase();
-      row.style.display = text.includes(searchTerm) ? '' : 'none';
+  const searchQuestions = document.getElementById('searchQuestions');
+  if (searchQuestions) {
+    searchQuestions.addEventListener('input', function() {
+      const searchTerm = this.value.toLowerCase();
+      const rows = document.querySelectorAll('#adminQuestionList tr');
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+      });
     });
-  });
+  }
   
   // Close Modals
   document.querySelectorAll('.modal-close').forEach(btn => {
@@ -462,11 +481,14 @@ function setupAdminEvents() {
   });
   
   // Logout
-  document.getElementById('adminLogout').addEventListener('click', (e) => {
-    e.preventDefault();
-    logoutUser();
-    window.location.href = 'index.html';
-  });
+  const adminLogout = document.getElementById('adminLogout');
+  if (adminLogout) {
+    adminLogout.addEventListener('click', (e) => {
+      e.preventDefault();
+      logoutUser();
+      window.location.href = 'index.html';
+    });
+  }
   
   // Tabs
   document.querySelectorAll('.admin-tab-btn').forEach(btn => {
@@ -475,7 +497,8 @@ function setupAdminEvents() {
       this.classList.add('active');
       const tabId = this.dataset.tab;
       document.querySelectorAll('.admin-tab-content').forEach(t => t.classList.remove('active'));
-      document.getElementById('tab-' + tabId).classList.add('active');
+      const tabContent = document.getElementById('tab-' + tabId);
+      if (tabContent) tabContent.classList.add('active');
       if (tabId === 'questions') renderAllQuestions();
       if (tabId === 'exams') renderExamList();
     });
@@ -498,5 +521,4 @@ function setupAdminEvents() {
   }
 }
 
-// ===== Initialize Admin =====
 document.addEventListener('DOMContentLoaded', loadAdmin);

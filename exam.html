@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Exam - MCQ System</title>
   <link rel="stylesheet" href="css/style.css">
+  <script src="js/theme.js"></script>
 </head>
 <body>
   <nav class="navbar">
@@ -15,9 +16,9 @@
       </div>
       <div class="nav-links">
         <a href="index.html">🏠 Home</a>
-        <a href="dashboard.html">📊 Dashboard</a>
       </div>
       <div class="nav-actions">
+        <button class="theme-toggle" id="themeToggleBtn" title="Toggle dark/light mode">🌙</button>
         <div class="timer-box" style="background:var(--warning-light);color:#92400e;padding:6px 16px;border-radius:30px;font-weight:700;">
           ⏱ <span id="timerDisplay">00:00</span>
         </div>
@@ -31,6 +32,10 @@
       <span style="color:var(--text-secondary);">Questions: <span id="examTotal">0</span></span>
     </div>
 
+    <div id="resumeBanner" class="autosave-banner" style="display:none;">
+      💾 <span>আগের সেশন থেকে আপনার উত্তর ও সময় পুনরুদ্ধার করা হয়েছে (auto-saved)।</span>
+    </div>
+
     <div style="display:flex;gap:24px;flex-wrap:wrap;">
       <aside style="flex:0 0 200px;background:var(--card-bg);border-radius:var(--radius);padding:16px;border:1px solid var(--border);height:fit-content;">
         <h3 style="font-size:0.85rem;margin-bottom:10px;">Questions</h3>
@@ -38,6 +43,7 @@
         <div style="display:flex;gap:8px;font-size:0.75rem;color:var(--text-muted);flex-wrap:wrap;">
           <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--success);"></span> Answered</span>
           <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--border);"></span> Unanswered</span>
+          <span>🚩 Flagged</span>
         </div>
         <button id="submitBtn" class="btn btn-danger" style="width:100%;margin-top:10px;">📤 Submit</button>
       </aside>
@@ -52,7 +58,10 @@
             <span id="qNumber">Question 1</span>
             <span id="qTotal">of 0</span>
           </div>
-          <h3 id="qText" style="font-size:1.15rem;margin-bottom:20px;">Loading question...</h3>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:20px;">
+            <h3 id="qText" style="font-size:1.15rem;">Loading question...</h3>
+            <button id="flagBtn" class="flag-btn" title="Mark this question to review later">🚩 Flag</button>
+          </div>
           <div id="optionsContainer" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;"></div>
           <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;">
             <button id="prevBtn" class="btn btn-secondary" disabled>◀ Previous</button>
@@ -63,8 +72,19 @@
     </div>
   </main>
 
+  <div class="toast" id="toast"></div>
+
   <script src="js/data.js"></script>
-  <script src="js/auth.js"></script>
   <script src="js/exam.js"></script>
+  <script>
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      toast.textContent = message;
+      toast.className = 'toast show ' + type;
+      clearTimeout(toast._timeout);
+      toast._timeout = setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+  </script>
 </body>
 </html>

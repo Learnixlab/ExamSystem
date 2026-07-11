@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Study Materials - MCQ Exam</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/theme.js"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-brand">
+        <span class="brand-icon">📘</span>
+        <span class="brand-text">MCQ Exam</span>
+      </div>
+      <div class="nav-links">
+        <a href="index.html">🏠 Home</a>
+        <a href="materials.html" class="active">📎 Study Materials</a>
+        <a href="myresults.html">📊 My Results</a>
+      </div>
+      <div class="nav-actions">
+        <button class="theme-toggle" id="themeToggleBtn" title="Toggle dark/light mode">🌙</button>
+      </div>
+    </div>
+  </nav>
+
+  <main style="max-width:1000px;margin:24px auto;padding:0 20px;">
+    <div style="margin-bottom:16px;">
+      <h2>📎 Study Materials</h2>
+      <p style="color:var(--text-secondary);font-size:0.9rem;">নোট, PDF ও অন্যান্য পড়াশোনার রিসোর্স — এক জায়গায়।</p>
+    </div>
+
+    <div class="category-filters" id="materialFilters"></div>
+    <div class="exams-grid" id="materialsGrid" style="margin-top:16px;"></div>
+  </main>
+
+  <script src="js/data.js"></script>
+  <script src="js/exam.js"></script>
+  <script>
+    let activeMaterialFilter = 'all';
+
+    function renderMaterials() {
+      const grid = document.getElementById('materialsGrid');
+      const filterContainer = document.getElementById('materialFilters');
+
+      if (!STUDY_MATERIALS || STUDY_MATERIALS.length === 0) {
+        filterContainer.innerHTML = '';
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-secondary);">📭 এখনও কোনো study material যোগ করা হয়নি। Admin panel থেকে যোগ করা যাবে।</div>`;
+        return;
+      }
+
+      // Preselect a specific exam's materials if index.html linked here with ?examId=...
+      const params = new URLSearchParams(window.location.search);
+      const examIdParam = params.get('examId');
+
+      const groups = Array.from(new Set(STUDY_MATERIALS.map(m => m.category || 'general')));
+      const chips = ['all', ...groups];
+      filterContainer.innerHTML = chips.map(cat => `
+        <button class="cat-chip ${cat === activeMaterialFilter ? 'active' : ''}" data-cat="${cat}">
+          ${cat === 'all' ? '🗂️ সব' : cat}
+        </button>
+      `).join('');
+      filterContainer.querySelectorAll('.cat-chip').forEach(btn => {
+        btn.addEventListener('click', () => { activeMaterialFilter = btn.dataset.cat; renderMaterials(); });
+      });
+
+      let visible = activeMaterialFilter === 'all'
+        ? STUDY_MATERIALS
+        : STUDY_MATERIALS.filter(m => (m.category || 'general') === activeMaterialFilter);
+
+      if (examIdParam) visible = visible.filter(m => m.examId === examIdParam);
+
+      if (visible.length === 0) {
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-secondary);">😕 এই ফিল্টারে কোনো material নেই।</div>`;
+        return;
+      }
+
+      grid.innerHTML = visible.map(m => {
+        const exam = m.examId ? getExamById(m.examId) : null;
+        return `
+          <div class="exam-card">
+            <div class="exam-icon">${m.icon || '📎'}</div>
+            <h3>${m.title}</h3>
+            <div style="margin:6px 0 10px;">
+              <span class="badge-category ${categoryColorClass(m.category)}">${m.category || 'general'}</span>
+              ${exam ? `<span class="badge-category cat-color-4">🔗 ${exam.title}</span>` : ''}
+            </div>
+            <p class="exam-desc">${m.description || ''}</p>
+            <a href="${m.url}" target="_blank" rel="noopener" class="btn btn-primary" style="width:100%;">📖 Open Material</a>
+          </div>
+        `;
+      }).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', renderMaterials);
+  </script>
+</body>
+</html>

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MCQ Exam System</title>
   <link rel="stylesheet" href="css/style.css">
+  <script src="js/theme.js"></script>
 </head>
 <body>
 
@@ -17,11 +18,13 @@
       </div>
       <div class="nav-links" id="navLinks">
         <a href="index.html" class="active">Home</a>
-        <a href="dashboard.html">Dashboard</a>
         <a href="#" id="navExamLink">Exams</a>
-        <a href="#" id="navLeaderboardLink">Leaderboard</a>
+        <a href="materials.html">📎 Study Materials</a>
+        <a href="myresults.html">📊 My Results</a>
       </div>
-      <div class="nav-actions" id="navActions"></div>
+      <div class="nav-actions">
+        <button class="theme-toggle" id="themeToggleBtn" title="Toggle dark/light mode">🌙</button>
+      </div>
       <button class="mobile-toggle" id="mobileToggle">☰</button>
     </div>
   </nav>
@@ -33,7 +36,7 @@
     <section class="hero">
       <div class="hero-content">
         <h1>📚 <span class="highlight">MCQ</span> Examination System</h1>
-        <p>Practice, Test, and Improve your knowledge with our comprehensive MCQ platform.</p>
+        <p>Practice, Test, and Improve your knowledge with our comprehensive MCQ platform. No login required — just pick an exam and start!</p>
         <div class="hero-buttons">
           <button class="btn btn-primary" id="heroStartBtn">🚀 Start Exam</button>
           <button class="btn btn-outline" id="heroLearnBtn">Learn More</button>
@@ -46,10 +49,6 @@
           <div class="stat-item">
             <span class="stat-number" id="totalQuestions">0</span>
             <span class="stat-label">Questions</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-number" id="totalStudents">0</span>
-            <span class="stat-label">Students</span>
           </div>
         </div>
       </div>
@@ -70,9 +69,9 @@
       <h2>✨ Key Features</h2>
       <div class="features-grid">
         <div class="feature-card">
-          <div class="feature-icon">📋</div>
-          <h3>Multiple Exams</h3>
-          <p>Different subjects and categories to test your knowledge</p>
+          <div class="feature-icon">🚫🔑</div>
+          <h3>No Login Needed</h3>
+          <p>Just open an exam and start — nothing to sign up for</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon">⏱️</div>
@@ -85,9 +84,9 @@
           <p>Get comprehensive analysis of your performance</p>
         </div>
         <div class="feature-card">
-          <div class="feature-icon">🏅</div>
-          <h3>Leaderboard</h3>
-          <p>Compete with others and see where you stand</p>
+          <div class="feature-icon">☝️</div>
+          <h3>One Attempt</h3>
+          <p>Each exam can be taken once on this device to keep results honest</p>
         </div>
       </div>
     </section>
@@ -95,57 +94,9 @@
     <!-- ===== EXAMS LIST ===== -->
     <section class="exams-section" id="examsSection">
       <h2>📖 Available Exams</h2>
+      <div class="category-filters" id="categoryFilters"></div>
       <div class="exams-grid" id="examsGrid"></div>
     </section>
-
-    <!-- ===== AUTH MODALS ===== -->
-    <!-- Login Modal -->
-    <div class="modal" id="loginModal">
-      <div class="modal-content">
-        <span class="modal-close" id="loginClose">&times;</span>
-        <h2>🔐 Login</h2>
-        <form id="loginForm">
-          <div class="form-group">
-            <label>Email Address</label>
-            <input type="email" id="loginEmail" placeholder="Enter your email" required>
-          </div>
-          <div class="form-group">
-            <label>Password</label>
-            <input type="password" id="loginPassword" placeholder="Enter your password" required>
-          </div>
-          <button type="submit" class="btn btn-primary btn-block">Login</button>
-          <p class="auth-switch">Don't have an account? <a href="#" id="switchToRegister">Register</a></p>
-        </form>
-      </div>
-    </div>
-
-    <!-- Register Modal -->
-    <div class="modal" id="registerModal">
-      <div class="modal-content">
-        <span class="modal-close" id="registerClose">&times;</span>
-        <h2>📝 Register</h2>
-        <form id="registerForm">
-          <div class="form-group">
-            <label>Full Name</label>
-            <input type="text" id="registerName" placeholder="Enter your full name" required>
-          </div>
-          <div class="form-group">
-            <label>Email Address</label>
-            <input type="email" id="registerEmail" placeholder="Enter your email" required>
-          </div>
-          <div class="form-group">
-            <label>Password</label>
-            <input type="password" id="registerPassword" placeholder="Create a password" required>
-          </div>
-          <div class="form-group">
-            <label>Confirm Password</label>
-            <input type="password" id="registerConfirm" placeholder="Confirm your password" required>
-          </div>
-          <button type="submit" class="btn btn-primary btn-block">Create Account</button>
-          <p class="auth-switch">Already have an account? <a href="#" id="switchToLogin">Login</a></p>
-        </form>
-      </div>
-    </div>
 
     <!-- Toast Notification -->
     <div class="toast" id="toast"></div>
@@ -159,11 +110,6 @@
         <span class="brand-icon">📘</span>
         <span>MCQ Exam System</span>
       </div>
-      <div class="footer-links">
-        <a href="#">Privacy Policy</a>
-        <a href="#">Terms of Service</a>
-        <a href="#">Contact</a>
-      </div>
       <div class="footer-copy">
         &copy; 2026 MCQ Exam System. All rights reserved.
       </div>
@@ -171,53 +117,38 @@
   </footer>
 
   <script src="js/data.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/dashboard.js"></script>
   <script src="js/exam.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // Update stats
       document.getElementById('totalExams').textContent = ALL_EXAMS.length;
       const totalQ = ALL_EXAMS.reduce((sum, e) => sum + e.questions.length, 0);
       document.getElementById('totalQuestions').textContent = totalQ;
-      const users = JSON.parse(localStorage.getItem('exam_users') || '[]');
-      document.getElementById('totalStudents').textContent = users.length || 0;
-      
-      // Render exams
+
       renderExamList();
-      
-      // Auth check
-      checkAuthState();
-      
-      // Hero button
+
       document.getElementById('heroStartBtn').addEventListener('click', () => {
-        const user = getCurrentUser();
-        if (user) {
-          document.getElementById('examsSection').scrollIntoView({ behavior: 'smooth' });
-        } else {
-          document.getElementById('loginModal').style.display = 'flex';
-        }
+        document.getElementById('examsSection').scrollIntoView({ behavior: 'smooth' });
       });
-      
       document.getElementById('heroLearnBtn').addEventListener('click', () => {
         document.querySelector('.features').scrollIntoView({ behavior: 'smooth' });
       });
-      
       document.getElementById('navExamLink').addEventListener('click', (e) => {
         e.preventDefault();
         document.getElementById('examsSection').scrollIntoView({ behavior: 'smooth' });
       });
-      
-      document.getElementById('navLeaderboardLink').addEventListener('click', (e) => {
-        e.preventDefault();
-        window.location.href = 'dashboard.html#leaderboard';
-      });
-      
-      // Mobile toggle
       document.getElementById('mobileToggle').addEventListener('click', () => {
         document.getElementById('navLinks').classList.toggle('show');
       });
     });
+
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      toast.textContent = message;
+      toast.className = 'toast show ' + type;
+      clearTimeout(toast._timeout);
+      toast._timeout = setTimeout(() => toast.classList.remove('show'), 3000);
+    }
   </script>
 </body>
 </html>

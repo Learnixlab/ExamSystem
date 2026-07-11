@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Result - MCQ Exam</title>
   <link rel="stylesheet" href="css/style.css">
+  <script src="js/theme.js"></script>
 </head>
 <body>
+  <canvas id="confettiCanvas"></canvas>
   <nav class="navbar">
     <div class="nav-container">
       <div class="nav-brand">
@@ -15,7 +17,11 @@
       </div>
       <div class="nav-links">
         <a href="index.html">🏠 Home</a>
-        <a href="dashboard.html">📊 Dashboard</a>
+        <a href="materials.html">📎 Study Materials</a>
+        <a href="myresults.html">📊 My Results</a>
+      </div>
+      <div class="nav-actions">
+        <button class="theme-toggle" id="themeToggleBtn" title="Toggle dark/light mode">🌙</button>
       </div>
     </div>
   </nav>
@@ -54,10 +60,10 @@
         </div>
       </div>
 
-      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;" class="no-print">
         <button onclick="window.location.href='index.html'" class="btn btn-primary">🏠 Home</button>
-        <button onclick="window.location.href='dashboard.html'" class="btn btn-secondary">📊 Dashboard</button>
         <button id="reviewResultBtn" class="btn btn-outline">📋 Review Answers</button>
+        <button onclick="window.print()" class="btn btn-outline">🖨️ Print / Save as PDF</button>
       </div>
     </div>
 
@@ -68,7 +74,6 @@
   </main>
 
   <script src="js/data.js"></script>
-  <script src="js/auth.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       const resultData = sessionStorage.getItem('examResult');
@@ -76,33 +81,32 @@
         window.location.href = 'index.html';
         return;
       }
-      
+
       const result = JSON.parse(resultData);
-      const exam = getExamById(result.examId);
-      
+
       const displayScore = Math.max(0, result.score);
       const displayPct = Math.min(100, Math.max(0, parseFloat(result.percentage)));
-      
-      document.getElementById('resultExamTitle').textContent = result.examTitle || (exam ? exam.title : 'Exam');
+
+      document.getElementById('resultExamTitle').textContent = result.examTitle || 'Exam';
       document.getElementById('resultCorrect').textContent = result.correct;
       document.getElementById('resultWrong').textContent = result.wrong;
       document.getElementById('resultSkipped').textContent = result.unanswered;
       document.getElementById('resultScore').textContent = displayScore.toFixed(1);
       document.getElementById('resultPercentage').textContent = displayPct.toFixed(1) + '%';
       document.getElementById('resultTime').textContent = Math.floor(result.timeTaken / 60) + 'm ' + (result.timeTaken % 60) + 's';
-      
+
       const pct = displayPct;
       const circle = document.querySelector('div[style*="conic-gradient"]');
       if (circle) {
         circle.style.background = `conic-gradient(var(--primary) ${pct}%, var(--border) ${pct}%)`;
       }
-      
+
       const status = document.getElementById('resultStatus');
-      if (pct >= 70) status.textContent = '🎉 Excellent!';
+      if (pct >= 70) { status.textContent = '🎉 Excellent!'; launchConfetti(); }
       else if (pct >= 50) status.textContent = '👍 Good Job!';
       else if (pct >= 30) status.textContent = '📚 Keep Practicing!';
       else status.textContent = '💪 Don\'t Give Up!';
-      
+
       document.getElementById('reviewResultBtn').addEventListener('click', function() {
         const section = document.getElementById('reviewSection');
         if (section.style.display === 'none') {
@@ -115,20 +119,68 @@
         }
       });
     });
-    
+
+    // ===== Confetti celebration (lightweight, no dependencies) =====
+    function launchConfetti() {
+      const canvas = document.getElementById('confettiCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const colors = ['#4f46e5', '#16a34a', '#f59e0b', '#dc2626', '#7c3aed'];
+      const pieces = Array.from({ length: 120 }, () => ({
+        x: Math.random() * canvas.width,
+        y: -20 - Math.random() * canvas.height * 0.5,
+        size: 6 + Math.random() * 6,
+        speedY: 2 + Math.random() * 3,
+        speedX: (Math.random() - 0.5) * 2,
+        rotation: Math.random() * 360,
+        spin: (Math.random() - 0.5) * 10,
+        color: colors[Math.floor(Math.random() * colors.length)]
+      }));
+
+      let frame = 0;
+      const maxFrames = 240; // ~4 seconds at 60fps
+
+      function draw() {
+        frame++;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        pieces.forEach(p => {
+          p.y += p.speedY;
+          p.x += p.speedX;
+          p.rotation += p.spin;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rotation * Math.PI) / 180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+          ctx.restore();
+        });
+        if (frame < maxFrames) {
+          requestAnimationFrame(draw);
+        } else {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      }
+      requestAnimationFrame(draw);
+    }
+
     function buildReview(result) {
       const container = document.getElementById('reviewList');
-      const exam = getExamById(result.examId);
-      if (!exam) return;
-      
+      // Use the exact question order the user was shown (saved at submit time),
+      // so review always matches their actual answers correctly.
+      const questions = result.questions || [];
+      if (questions.length === 0) return;
+
       const letters = ['A', 'B', 'C', 'D'];
-      container.innerHTML = exam.questions.map((q, i) => {
+      container.innerHTML = questions.map((q, i) => {
         const userAns = result.userAnswers[i];
         const isCorrect = userAns === q.answer;
-        const isSkipped = userAns === null;
+        const isSkipped = userAns === null || userAns === undefined;
         const tag = isSkipped ? '⏭️ Skipped' : isCorrect ? '✅ Correct' : '❌ Wrong';
         const tagClass = isSkipped ? 'skipped' : isCorrect ? 'correct' : 'wrong';
-        
+
         return `
           <div style="background:var(--card-bg);border-radius:var(--radius-sm);padding:16px;margin-bottom:12px;border:1px solid var(--border);">
             <div style="display:flex;justify-content:space-between;font-size:0.85rem;color:var(--text-secondary);margin-bottom:6px;">

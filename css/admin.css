@@ -1,0 +1,73 @@
+/* ---------- Admin Tabs ---------- */
+.admin-tab-btn {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+.admin-tab-btn.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+.admin-tab-content { display: none; }
+.admin-tab-content.active { display: block; }
+
+/* ---------- Admin Exam Card ---------- */
+.admin-exam-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.admin-exam-card .exam-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.admin-exam-card .exam-icon { font-size: 1.8rem; }
+.admin-exam-card h4 { margin-bottom: 4px; }
+.admin-exam-card .exam-meta {
+  display: flex;
+  gap: 14px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+.admin-exam-card .exam-actions { display: flex; gap: 8px; }
+
+.btn-edit, .btn-delete {
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-edit { background: var(--primary-light); color: var(--primary); }
+.btn-edit:hover { background: var(--primary); color: white; }
+.btn-delete { background: #fee2e2; color: var(--danger); }
+.btn-delete:hover { background: var(--danger); color: white; }
+
+.badge-exam {
+  display: inline-block;
+  background: var(--primary-light);
+  color: var(--primary);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+table th, table td { border-bottom: 1px solid var(--border); }
+table tbody tr:hover { background: var(--bg); }
